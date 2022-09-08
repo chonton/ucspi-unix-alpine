@@ -37,7 +37,7 @@ static mode_t opt_umask = 0;
 static unsigned int opt_backlog = 128;
 static const char* opt_banner = 0;
 
-void usage(const char* message)
+static void usage(const char* message)
 {
   if(message)
     fprintf(stderr, "%s: %s\n", argv0, message);
@@ -66,30 +66,30 @@ void usage(const char* message)
   exit(1);
 }
 
-void log_status(void)
+static void log_status(void)
 {
   if(opt_verbose) printf("unixserver: status: %d/%d\n", forked, opt_connections);
 }
 
-void log_child_exit(pid_t pid, int status)
+static void log_child_exit(pid_t pid, int status)
 {
   if(opt_verbose) printf("unixserver: end %d status %d\n", pid, status);
   log_status();
 }
 
-void log_child_start(pid_t pid)
+static void log_child_start(pid_t pid)
 {
   if(opt_verbose) printf("unixserver: pid %d\n", pid);
 }
 
-void die(const char* msg)
+static void die(const char* msg)
 {
   perror(msg);
   if(opt_delete) unlink(opt_socket);
   exit(1);
 }
 
-void child_die(const char* msg)
+static void child_die(const char* msg)
 {
   perror(msg);
   exit(-1);
@@ -127,7 +127,7 @@ static void use_socket_gid(const char* str)
   if (!parseu(str, &opt_socket_gid, 10)) usage("Invalid socket GID number");
 }
 
-void parse_options(int argc, char* argv[])
+static void parse_options(int argc, char* argv[])
 {
   int opt;
   argv0 = argv[0];
@@ -175,7 +175,7 @@ void parse_options(int argc, char* argv[])
   command_argv = argv + 1;
 }
 
-int make_socket()
+static int make_socket()
 {
   struct sockaddr_un* saddr;
   int s;
@@ -199,7 +199,7 @@ int make_socket()
   return s;
 }
 
-void start_child(int fd)
+static void start_child(int fd)
 {
   if(opt_banner) {
     ssize_t len = strlen(opt_banner);
@@ -213,7 +213,7 @@ void start_child(int fd)
   child_die("execvp");
 }
 
-void handle_connection(int s)
+static void handle_connection(int s)
 {
   int fd;
   pid_t pid;
@@ -242,7 +242,7 @@ void handle_connection(int s)
   }
 }
 
-void handle_children()
+static void handle_children()
 {
   pid_t pid;
   int status;
@@ -259,7 +259,7 @@ void handle_children()
   signal(SIGCHLD, handle_children);
 }
 
-void handle_child(void)
+static void handle_child(void)
 {
   int status;
   pid_t pid = wait(&status);
@@ -268,13 +268,13 @@ void handle_child(void)
   log_child_exit(pid, status);
 }
 
-void handle_intr()
+static void handle_intr()
 {
   if(opt_delete) unlink(opt_socket);
   exit(0);
 }
 
-int main(int argc, char* argv[])
+int server_main(int argc, char* argv[])
 {
   int s;
   parse_options(argc, argv);

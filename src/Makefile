@@ -2,13 +2,7 @@ SHELL=/bin/sh
 
 DEFAULT: all
 
-all: unixclient unixserver unixcat
-
-clean: TARGETS
-	rm -f `cat TARGETS`
-
-clean-spac: clean AUTOFILES
-	rm -f `cat AUTOFILES`
+all: ucspiunix unixcat
 
 compile: conf-cc
 	( echo '#!/bin/sh'; \
@@ -29,12 +23,6 @@ haswaitp.h: compile load haswaitp.h0 haswaitp.h1 trywaitp.c
 	( ( ./compile trywaitp.c && ./load trywaitp; ) && cat haswaitp.h1 || cat haswaitp.h0 ) > $@
 	@rm -f trywaitp.o trywaitp
 
-install: 
-	install -d $(or $(prefix),/usr/local)/$(or $(bindir),bin)
-	install -m 755 unixcat unixclient unixserver $(or $(prefix),/usr)/$(or $(bindir),bin)
-	install -d $(or $(prefix),/usr/local)/$(or $(mandir),man)/man1
-	install -m 644 unixclient.1 unixserver.1 $(or $(prefix),/usr)/$(or $(mandir),man)/man1
-
 load: conf-ld
 	( echo '#!/bin/sh';\
 	  echo 'main="$$1"; shift';\
@@ -54,14 +42,14 @@ unixcat: warn-auto.sh unixcat.sh
 	cat warn-auto.sh unixcat.sh >unixcat
 	chmod 755 unixcat
 
-unixclient: unixclient.o load env.o utoa.o socket.lib
-	./load unixclient env.o utoa.o  `cat socket.lib`
+ucspiunix: ucspiunix.o load unixclient.o unixserver.o env.o utoa.o socket.lib
+	./load ucspiunix unixclient.o unixserver.o env.o utoa.o  `cat socket.lib`
+
+ucspiunix.o: compile ucspiunix.c
+	./compile ucspiunix.c
 
 unixclient.o: compile unixclient.c
 	./compile unixclient.c
-
-unixserver: unixserver.o load env.o utoa.o socket.lib
-	./load unixserver env.o utoa.o  `cat socket.lib`
 
 unixserver.o: compile unixserver.c haswaitp.h
 	./compile unixserver.c

@@ -21,13 +21,13 @@ static const char* argv0;
 static const char* opt_socket;
 static char** command_argv;
 
-void die(const char* msg)
+static void die(const char* msg)
 {
   perror(msg);
   exit(1);
 }
 
-int do_connect(void)
+static int do_connect(void)
 {
   size_t size;
   struct sockaddr_un* saddr;
@@ -43,13 +43,13 @@ int do_connect(void)
   return s;
 }
 
-void usage(void)
+static void usage(void)
 {
   fprintf(stderr, "usage: %s socket program\n", argv0);
   exit(1);
 }
 
-void parse_options(int argc, char* argv[])
+static void parse_options(int argc, char* argv[])
 {
   argv0 = argv[0];
   ++argv;
@@ -59,7 +59,7 @@ void parse_options(int argc, char* argv[])
   command_argv = argv + 1;
 }
 
-void exec_program(int fd)
+static void exec_program(int fd)
 {
   setup_env(fd, opt_socket);
   if(dup2(fd, 6) == -1) die("dup2 6");
@@ -69,7 +69,7 @@ void exec_program(int fd)
   die("execvp");
 }
 
-int main(int argc, char* argv[])
+int client_main(int argc, char* argv[])
 {
   int fd;
   parse_options(argc, argv);
