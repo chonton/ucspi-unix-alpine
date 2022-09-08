@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -67,29 +68,31 @@ void usage(const char* message)
 
 void log_status(void)
 {
-  if(opt_verbose)
-    printf("unixserver: status: %d/%d\n", forked, opt_connections);
+  if(opt_verbose) printf("unixserver: status: %d/%d\n", forked, opt_connections);
 }
 
 void log_child_exit(pid_t pid, int status)
 {
-  if(opt_verbose)
-    printf("unixserver: end %d status %d\n", pid, status);
+  if(opt_verbose) printf("unixserver: end %d status %d\n", pid, status);
   log_status();
 }
 
 void log_child_start(pid_t pid)
 {
-  if(opt_verbose)
-    printf("unixserver: pid %d\n", pid);
+  if(opt_verbose) printf("unixserver: pid %d\n", pid);
 }
 
 void die(const char* msg)
 {
   perror(msg);
-  if(opt_delete)
-    unlink(opt_socket);
+  if(opt_delete) unlink(opt_socket);
   exit(1);
+}
+
+void child_die(const char* msg)
+{
+  perror(msg);
+  exit(-1);
 }
 
 static int parseu(const char* str, unsigned* out, int base)
@@ -167,8 +170,7 @@ void parse_options(int argc, char* argv[])
   }
   argc -= optind;
   argv += optind;
-  if(argc < 2)
-    usage(0);
+  if(argc < 2) usage(0);
   opt_socket = argv[0];
   command_argv = argv + 1;
 }
@@ -180,28 +182,20 @@ int make_socket()
   mode_t old_umask;
   saddr = (struct sockaddr_un*)malloc(sizeof(struct sockaddr_un) +
 				      strlen(opt_socket) + 1);
-  if(saddr == NULL)
-    die("malloc");
+  if(saddr == NULL) die("malloc");
   saddr->sun_family = AF_UNIX;
   strcpy(saddr->sun_path, opt_socket);
   unlink(opt_socket);
   s = socket(AF_UNIX, SOCK_STREAM, 0);
-  if(s < 0)
-    die("socket");
+  if(s < 0) die("socket");
   old_umask = umask(opt_umask);
-  if(bind(s, (struct sockaddr*)saddr, SUN_LEN(saddr)) != 0)
-    die("bind");
+  if(bind(s, (struct sockaddr*)saddr, SUN_LEN(saddr)) != 0) die("bind");
   umask(old_umask);
-  if(chown(opt_socket, opt_socket_uid, opt_socket_gid) == -1)
-    die("chown");
-  if(opt_perms && chmod(opt_socket, opt_perms) == -1)
-    die("chmod");
-  if(listen(s, opt_backlog) != 0)
-    die("listen");
-  if(opt_gid != (gid_t)-1 && setgid(opt_gid) == -1)
-    die("setgid");
-  if(opt_uid != (uid_t)-1 && setuid(opt_uid) == -1)
-    die("setuid");
+  if(chown(opt_socket, opt_socket_uid, opt_socket_gid) == -1) die("chown");
+  if(opt_perms && chmod(opt_socket, opt_perms) == -1) die("chmod");
+  if(listen(s, opt_backlog) != 0) die("listen");
+  if(opt_gid != (gid_t)-1 && setgid(opt_gid) == -1) die("setgid");
+  if(opt_uid != (uid_t)-1 && setuid(opt_uid) == -1) die("setuid");
   return s;
 }
 
@@ -209,20 +203,14 @@ void start_child(int fd)
 {
   if(opt_banner) {
     ssize_t len = strlen(opt_banner);
-    if(write(fd, opt_banner, len) != len) {
-      perror("write");
-      exit(-1);
-    }
+    if(write(fd, opt_banner, len) != len)  child_die("write");
   }
   setup_env(fd, opt_socket);
-  if(dup2(fd, 0) == -1 || dup2(fd, 1) == -1) {
-    perror("dup2");
-    exit(-1);
-  }
+  if(dup2(fd, 0) == -1) child_die("dup2 stdin");
+  if(dup2(fd, 1) == -1) child_die("dup2 stdout");
   close(fd);
   execvp(command_argv[0], command_argv);
-  perror("execvp");
-  exit(-1);
+  child_die("execvp");
 }
 
 void handle_connection(int s)
@@ -275,16 +263,14 @@ void handle_child(void)
 {
   int status;
   pid_t pid = wait(&status);
-  if(pid == -1)
-    die("wait");
+  if(pid == -1) die("wait");
   --forked;
   log_child_exit(pid, status);
 }
 
 void handle_intr()
 {
-  if(opt_delete)
-    unlink(opt_socket);
+  if(opt_delete) unlink(opt_socket);
   exit(0);
 }
 

@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,16 +32,13 @@ int do_connect(void)
   size_t size;
   struct sockaddr_un* saddr;
   int s = socket(AF_UNIX, SOCK_STREAM, 0);
-  if(s == -1)
-    die("socket");
+  if(s == -1) die("socket");
   size = sizeof(struct sockaddr_un) + strlen(opt_socket)+1;
   saddr = (struct sockaddr_un*)malloc(size);
-  if(saddr == NULL)
-    die("malloc");
+  if(saddr == NULL) die("malloc");
   saddr->sun_family = AF_UNIX;
   strcpy(saddr->sun_path, opt_socket);
-  if(connect(s, (struct sockaddr*)saddr, SUN_LEN(saddr)) == -1)
-    die("connect");
+  if(connect(s, (struct sockaddr*)saddr, SUN_LEN(saddr)) == -1) die("connect");
   free(saddr);
   return s;
 }
@@ -56,8 +54,7 @@ void parse_options(int argc, char* argv[])
   argv0 = argv[0];
   ++argv;
   --argc;
-  if(argc < 2)
-    usage();
+  if(argc < 2) usage();
   opt_socket = argv[0];
   command_argv = argv + 1;
 }
@@ -65,8 +62,8 @@ void parse_options(int argc, char* argv[])
 void exec_program(int fd)
 {
   setup_env(fd, opt_socket);
-  if(dup2(fd, 6) == -1 || dup2(fd, 7) == -1)
-    die("dup2");
+  if(dup2(fd, 6) == -1) die("dup2 6");
+  if(dup2(fd, 7) == -1) die("dup2 7");
   if(fd != 6 && fd != 7) close(fd);
   execvp(command_argv[0], command_argv);
   die("execvp");

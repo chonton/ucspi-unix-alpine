@@ -1,0 +1,3 @@
+gcc -W -Wall -O -g
+
+This will be used to compile .c files.

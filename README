@@ -1,33 +1,15 @@
-ucspi-unix
+ucspi-unix-alpine
 UNIX-domain socket client-server command-line tools
-Bruce Guenter <bruceg@untroubled.org>
-Version 1.0
-2015-08-11
 
-This package contains UNIX domain socket client and server programs that
-conform to UCSPI, the UNIX Client-Server Program Interface.
+unixclient and unixserver are command-line tools for building UNIX
+domain client-server applications.  unixclient connects to a UNIX domain
+socket and runs a program of your choice.  unixserver creates a UNIX
+domain socket, waits for incoming connections and, for each connection,
+runs a program of your choice.
 
-A mailing list has been set up to discuss this and other packages.
-To subscribe, send an email to:
-	bgware-subscribe@lists.untroubled.org
-A mailing list archive is available at:
-	http://lists.untroubled.org/?list=bgware
-
-Development versions of ucspi-unix are available at GitHub:
-        https://github.com/bruceg/ucspi-unix
-
-Requirements:
-
-- A UNIX system supporting UNIX domain sockets.
-- Systems supporting the SO_PEERCRED socket option (only Linux
-  currently) will have extra functionality.
-
-How to install:
-
-- Run "make"
-- As root, run "make install"
-- To install in alternate locations, use:
-  make install prefix=/usr bindir=/bin mandir=/share/man
+unixclient and unixserver conform to UCSPI, the UNIX Client-Server
+Program Interface, using UNIX domain sockets.  UCSPI tools are available
+for several different networks.
 
 This program is Copyright(C) 2015 Bruce Guenter, and may be copied
 according to the GNU GENERAL PUBLIC LICENSE (GPL) Version 2 or a later
